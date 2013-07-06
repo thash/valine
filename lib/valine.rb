@@ -6,19 +6,16 @@ module Valine
   class Command
     attr_accessor :filename
     def initialize(filenames)
+      #TODO: allow multiple files
       raise if filenames.size != 1
       @filename = filenames.first
     end
 
     def start
-      Curses.init_screen
-      Curses.cbreak
-      Curses.noecho
-
-      window = Window.new
+      window = Window.new(Curses.lines, Curses.cols, 0, 0)
       window.display(@filename)
 
-      handler = KeyHandler.new
+      handler = KeyHandler.new(:normal)
       begin
         while true
           key = window.getch

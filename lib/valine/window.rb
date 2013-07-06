@@ -1,8 +1,17 @@
 module Valine
-  class Window
-    def initialize
-      @window = Curses.stdscr
-      @window.scrollok(true)
+  class Window < ::Curses::Window
+    def initialize(*args)
+      super(*args)
+      self.scrollok(true) # scroll whole lines displayed in window.
+
+      ### Curses ###
+      # The cbreak routine disables line buffering and erase/kill character-processing
+      # (interrupt and flow control characters are unaffected),
+      # making characters typed by the user immediately available to the program.
+      Curses.cbreak
+      # The echo and noecho routines control whether characters typed by the user
+      # are echoed by getch as they are typed.
+      Curses.noecho
     end
 
     def display(filename)
@@ -13,35 +22,31 @@ module Valine
         @file.each_line do |line|
           @lines.push(line.chop)
         end
-        @lines[0..(@window.maxy - 1)].each_with_index do |line, idx|
-          @window.setpos(idx, 0)
-          @window.addstr(line)
+        @lines[0..(self.maxy - 1)].each_with_index do |line, idx|
+          self.setpos(idx, 0)
+          self.addstr(line)
         end
-      rescue
-        raise IOError, "Cannot open file: #{filename}"
+      rescue => e
+        raise IOError, "Cannot open file: #{filename}\n #{e.message}"
       end
       @x = @y = 0
       @y_over = 0
-      @window.setpos(@x, @y)
-      @window.refresh
-    end
-
-    def getch
-      return @window.getch
+      self.setpos(@x, @y)
+      self.refresh
     end
 
     def input(char)
-      @window.insch(char)
-      @window.setpos(@y, @x += 1)
+      self.insch(char)
+      self.setpos(@y, @x += 1)
     end
 
     def delete
-      @window.delch
+      self.delch
     end
 
     def cursor_down
       # move cursor
-      if  @y >= (@window.maxy - 1)
+      if  @y >= (self.maxy - 1)
         scroll_down
       else
         @y += 1 unless @y >= (@lines.length - 1)
@@ -50,8 +55,8 @@ module Valine
       if @x >= (@lines[@y + @y_over].length)
         @x = @lines[@y + @y_over].length
       end
-      @window.setpos(@y, @x)
-      @window.refresh
+      self.setpos(@y, @x)
+      self.refresh
     end
 
     def cursor_up
@@ -61,40 +66,40 @@ module Valine
       if @x >= (@lines[@y + @y_over].length)
         @x = @lines[@y + @y_over].length
       end
-      @window.setpos(@y, @x)
-      @window.refresh
+      self.setpos(@y, @x)
+      self.refresh
     end
 
     def cursor_left
       @x -= 1 unless @x <= 0
-      @window.setpos(@y, @x)
-      @window.refresh
+      self.setpos(@y, @x)
+      self.refresh
     end
 
     def cursor_right
       @x += 1 unless @x >= (@lines[@y + @y_over ].length)
-      @window.setpos(@y,@x)
-      @window.refresh
+      self.setpos(@y,@x)
+      self.refresh
     end
 
     def scroll_up
       return if @y_over <= 0
-      @window.scrl(-1)
+      self.scrl(-1)
       @y_over -= 1
       str = @lines[@y_over]
       if str # fill one line if any
-        @window.setpos(0, 0)
-        @window.addstr(str)
+        self.setpos(0, 0)
+        self.addstr(str)
       end
     end
 
     def scroll_down
-      return unless @y_over + @window.maxy < @lines.length
-      @window.scrl(1)
-      str = @lines[@y_over + @window.maxy]
+      return unless @y_over + self.maxy < @lines.length
+      self.scrl(1)
+      str = @lines[@y_over + self.maxy]
       if str # fill one line if any
-        @window.setpos(@window.maxy - 1, 0)
-        @window.addstr(str)
+        self.setpos(self.maxy - 1, 0)
+        self.addstr(str)
       end
       @y_over += 1
     end
