@@ -5,48 +5,35 @@ module Valine
       self.scrollok(true) # scroll whole lines displayed in window.
 
       ### Curses ###
-      # The cbreak routine disables line buffering and erase/kill character-processing
-      # (interrupt and flow control characters are unaffected),
-      # making characters typed by the user immediately available to the program.
+      # disables line buffering and erase/killcharacter-processing.
+      # (interrupt and flow control characters are unaffected)
+      # characters typed by the user immediately available to the program.
       Curses.cbreak
-      # The echo and noecho routines control whether characters typed by the user
+      # control whether characters typed by the user
       # are echoed by getch as they are typed.
       Curses.noecho
     end
 
     def display(filename)
-      @filename = filename
-      begin
-        @file = File.open(@filename, "a+")
-        @lines = []
-        @file.each_line do |line|
-          @lines.push(line.chop)
-        end
-        @lines[0..(self.maxy - 1)].each_with_index do |line, idx|
-          self.setpos(idx, 0)
-          self.addstr(line)
-        end
-      rescue => e
-        raise IOError, "Cannot open file: #{filename}\n #{e.message}"
-      end
-      @x = @y = 0
+      edit(filename)
+      @y = @x = 0
       @y_over = 0
-      self.setpos(@x, @y)
-      self.refresh
+      move(@y, @x)
+    end
+
+    def move(y, x)
+      setpos(y, x)
+      refresh
     end
 
     def input(char)
-      self.insch(char)
-      self.setpos(@y, @x += 1)
-    end
-
-    def delete
-      self.delch
+      insch(char)
+      setpos(@y, @x += 1)
     end
 
     def cursor_down
       # move cursor
-      if  @y >= (self.maxy - 1)
+      if  @y >= (maxy - 1)
         scroll_down
       else
         @y += 1 unless @y >= (@lines.length - 1)
@@ -55,8 +42,7 @@ module Valine
       if @x >= (@lines[@y + @y_over].length)
         @x = @lines[@y + @y_over].length
       end
-      self.setpos(@y, @x)
-      self.refresh
+      move(@y, @x)
     end
 
     def cursor_up
@@ -66,42 +52,55 @@ module Valine
       if @x >= (@lines[@y + @y_over].length)
         @x = @lines[@y + @y_over].length
       end
-      self.setpos(@y, @x)
-      self.refresh
+      move(@y, @x)
     end
 
     def cursor_left
       @x -= 1 unless @x <= 0
-      self.setpos(@y, @x)
-      self.refresh
+      move(@y, @x)
     end
 
     def cursor_right
-      @x += 1 unless @x >= (@lines[@y + @y_over ].length)
-      self.setpos(@y,@x)
-      self.refresh
+      @x += 1 unless @x >= (@lines[@y + @y_over].length)
+      move(@y, @x)
     end
 
     def scroll_up
       return if @y_over <= 0
-      self.scrl(-1)
+      scrl(-1)
       @y_over -= 1
       str = @lines[@y_over]
       if str # fill one line if any
-        self.setpos(0, 0)
-        self.addstr(str)
+        setpos(0, 0)
+        addstr(str)
       end
     end
 
     def scroll_down
-      return unless @y_over + self.maxy < @lines.length
-      self.scrl(1)
-      str = @lines[@y_over + self.maxy]
+      return unless @y_over + maxy < @lines.length
+      scrl(1)
+      str = @lines[@y_over + maxy]
       if str # fill one line if any
-        self.setpos(self.maxy - 1, 0)
-        self.addstr(str)
+        setpos(maxy - 1, 0)
+        addstr(str)
       end
       @y_over += 1
     end
+
+    private
+
+    def edit(filename)
+      @file = File.open(filename, 'a+')
+      @file.each_line do |line|
+        (@lines ||= []).push(line.chop)
+      end
+      @lines[0..(self.maxy - 1)].each_with_index do |line, idx|
+        self.setpos(idx, 0)
+        self.addstr(line)
+      end
+    rescue => e
+      raise IOError, "Cannot open file: #{filename}\n #{e.message}"
+    end
+
   end
 end
