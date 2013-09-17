@@ -13,7 +13,9 @@ module Valine
         when ?k then window.cursor_up
         when ?l then window.cursor_right
         when ?x then window.delch
-        when ?i,?a then return KeyHandler.new(:insert)
+        when ?i then return KeyHandler.new(:insert)
+        when ?a then return KeyHandler.new(:insert)
+        when ?: then return KeyHandler.new(:command)
         when ?q then raise 'しゅーりょー'
         end
       elsif mode == :insert
