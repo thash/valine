@@ -2,9 +2,12 @@ GEM
   remote: https://rubygems.org/
   specs:
     ast (1.1.0)
+    blankslate (2.1.2.4)
     parser (2.0.0.pre1)
       ast (~> 1.1)
       slop (~> 3.4, >= 3.4.5)
+    parslet (1.5.0)
+      blankslate (~> 2.0)
     rainbow (1.1.4)
     rubocop (0.9.1)
       parser (= 2.0.0.pre1)
@@ -15,4 +18,5 @@ PLATFORMS
   ruby
 
 DEPENDENCIES
+  parslet
   rubocop
